@@ -13,6 +13,11 @@ class Graph<E, V> {
 
     val edges: EdgeTable<E> = TreeBasedTable.create()
     val vertices = ArrayList<V>()
+    val totalEdges: Int
+        get() = edges.size()
+    val totalVertices: Int
+        get() = vertices.size
+
     fun addVertex(vertex: V): Int {
         val i = vertices.size
         vertices.add(vertex)
@@ -60,7 +65,7 @@ class Graph<E, V> {
         return collectEdges(vertex) { f, s -> this[s, f] }
     }
 
-    fun edges(vertex: V, debug: Boolean = false): List<Pair<E, Int>> {
+    fun edgesFrom(vertex: V): List<Pair<E, Int>> {
         return collectEdges(vertex) { f, s -> this[f, s] }
 
     }
@@ -68,11 +73,22 @@ class Graph<E, V> {
     fun printTree() {
         for ((index, value) in vertices.sortedBy { edgesTo(it).size }.withIndex()) {
             println("$index: $value")
-            for ((first, second) in edges(value)) {
+            for ((first, second) in edgesFrom(value)) {
                 println("  -> $second: $first")
             }
         }
     }
+
+    fun vertex(function: (V) -> Boolean): Pair<V, Int>? {
+        for ((i, v) in vertices.withIndex()) {
+            if (function(v)) {
+                return v to i
+            }
+        }
+        return null
+    }
+
+    fun edge(x: Int, y: Int): E? = edges[x, y]
 
 
 }
