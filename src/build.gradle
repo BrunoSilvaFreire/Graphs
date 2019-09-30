@@ -1,0 +1,11 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+dependencies {
+    api rootProject
+    implementation 'com.github.ajalt:clikt:2.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
