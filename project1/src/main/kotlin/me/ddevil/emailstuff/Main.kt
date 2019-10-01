@@ -1,8 +1,6 @@
 package me.ddevil.emailstuff
 
-import me.ddevil.graph.Graph
-import me.ddevil.graph.Labeled
-import me.ddevil.graph.selectHighestVertexBy
+import me.ddevil.graph.*
 import java.io.File
 import java.util.logging.Logger
 import javax.mail.internet.MimeMessage
@@ -83,6 +81,12 @@ fun main() {
     for ((index, vertex) in withMostOutgoingEmail.slice(0 until 20).withIndex()) {
         println("#$index $vertex: ${graph.edgesFrom(vertex).size}")
     }
+    val first = graph.vertices.first()
+    val last = graph.vertices.last()
+    val pathA = graph.depthFirstSearch(first, last)
+    println(pathA)
+    val pathB = graph.breadthFirstSearch(first, last)
+    println(pathB)
 }
 
 fun EmailGraph.findVertex(user: Address): Pair<Vertex, Int> {

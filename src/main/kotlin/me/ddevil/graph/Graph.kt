@@ -71,8 +71,8 @@ class Graph<E, V> {
     }
 
     fun printTree() {
-        for ((index, value) in vertices.sortedBy { edgesTo(it).size }.withIndex()) {
-            println("$index: $value")
+        for ((index, value) in vertices.withIndex()) {
+            println("$index:")
             for ((first, second) in edgesFrom(value)) {
                 println("  -> $second: $first")
             }
