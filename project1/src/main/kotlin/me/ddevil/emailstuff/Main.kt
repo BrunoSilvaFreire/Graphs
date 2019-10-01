@@ -18,8 +18,8 @@ class Vertex(
 
 class Edge(
     val emails: MutableList<MimeMessage> = ArrayList()
-) {
-    val weight: Int get() = emails.size
+) : Weighted {
+    override val weight: Int get() = emails.size
 }
 
 
@@ -81,12 +81,17 @@ fun main() {
     for ((index, vertex) in withMostOutgoingEmail.slice(0 until 20).withIndex()) {
         println("#$index $vertex: ${graph.edgesFrom(vertex).size}")
     }
+
     val first = graph.vertices.first()
     val last = graph.vertices.last()
+    val atRangeFour = graph.searchAtRadius(first, 4)
+    println(atRangeFour.joinToString())
     val pathA = graph.depthFirstSearch(first, last)
     println(pathA)
     val pathB = graph.breadthFirstSearch(first, last)
     println(pathB)
+
+
 }
 
 fun EmailGraph.findVertex(user: Address): Pair<Vertex, Int> {
@@ -107,5 +112,4 @@ fun readMail(file: File): MimeMessage {
     val s = Session.getInstance(Properties())
     val stream = ByteArrayInputStream(file.readBytes())
     return MimeMessage(s, stream)
-
 }

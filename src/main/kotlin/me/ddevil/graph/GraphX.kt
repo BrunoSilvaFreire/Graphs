@@ -89,3 +89,59 @@ fun <E, V, O> Graph<E, V>.search(
     }
     return null
 }
+
+private fun <E, V> searchRecurse(graph: Graph<E, V>, current: V, index: Int, target: Int, output: MutableList<V>) {
+    if (target == index) {
+        output += current
+    } else {
+        for ((edge, vert) in graph.edgesFrom(current)) {
+            searchRecurse(graph, graph[vert], index + 1, target, output)
+        }
+    }
+
+
+}
+
+fun <E, V> Graph<E, V>.searchAtRadius(reference: V, radius: Int): List<V> {
+    val list = ArrayList<V>()
+    searchRecurse(this, reference, 0, radius, list)
+    return list
+}
+
+
+fun <E, V> Graph<E, V>.pathWithHighestWeight(
+    a: V,
+    b: V
+): List<V>? where E : Weighted {
+    val open = ArrayList<V>()
+    val visited = ArrayList<V>()
+    val score = HashMap<V, Int>()
+    val cameFrom = HashMap<V, V>()
+    score[a] = 0
+    open += a
+    do {
+        val current = open.maxBy { score[it]!! } ?: break
+        open -= current
+        visited += current
+        val s = score[current]!!
+        for ((edge, index) in this.edgesFrom(current)) {
+            val other = this[index]
+            val candidate = s + edge.weight
+            if (other in visited) {
+                // Cycle
+                continue
+            }
+            if (other in score) {
+                if (score[other]!! >= candidate) {
+                    continue
+                }
+            }
+            score[other] = candidate
+            cameFrom[other] = current
+            if (other == b) {
+                return reconstructPath(other, cameFrom)
+            }
+        }
+    } while (current != null)
+    return null
+}
