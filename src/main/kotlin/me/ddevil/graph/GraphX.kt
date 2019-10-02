@@ -61,8 +61,12 @@ fun <E, V, O> Graph<E, V>.search(
     open: O,
     next: (O) -> V?
 ): List<V>? where O : MutableCollection<V> {
+    if (from == to) {
+        return listOf(from)
+    }
     var current = from
     val visited = ArrayList<V>()
+    println("Searching from $from to $to")
     val cameFrom = HashMap<V, V>()
     while (current != to) {
         visited += current
@@ -72,7 +76,6 @@ fun <E, V, O> Graph<E, V>.search(
             if (neighboor in visited) {
                 continue
             }
-            println("Currently @ $current")
             cameFrom[neighboor] = current
             if (neighboor == to) {
                 return reconstructPath(neighboor, cameFrom)
