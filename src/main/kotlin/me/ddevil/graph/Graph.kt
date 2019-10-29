@@ -23,6 +23,11 @@ class Graph<E, V> {
         vertices.add(vertex)
         return i
     }
+    fun addVertices(vararg vertices: V) {
+        for (vertex in vertices) {
+            addVertex(vertex)
+        }
+    }
 
     @JvmOverloads
     fun connect(first: Int, second: Int, edge: E, mode: ConnectionMode = ConnectionMode.BIDIRECTIONAL) {
@@ -89,6 +94,7 @@ class Graph<E, V> {
     }
 
     fun edge(x: Int, y: Int): E? = edges[x, y]
+    fun indexOf(vertex: V) = vertices.indexOf(vertex)
 
 
 }

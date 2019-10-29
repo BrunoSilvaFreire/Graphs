@@ -53,7 +53,9 @@ fun <E, V> Graph<E, V>.depthFirstSearch(
 fun <E, V> Graph<E, V>.breadthFirstSearch(
     from: V,
     to: V
-) = search(from, to, PriorityQueue<V>()) { it.poll() }
+) = search(from, to, PriorityQueue<V>()) {
+    it.poll()
+}
 
 fun <E, V, O> Graph<E, V>.search(
     from: V,
@@ -147,4 +149,85 @@ fun <E, V> Graph<E, V>.pathWithHighestWeight(
         }
     } while (current != null)
     return null
+}
+
+/**
+ * Passes through all the vertices reachable from [origin] once
+ * and invokes [onDiscovery] upon them.
+ */
+fun <E, V> Graph<E, V>.explore(
+    origin: V,
+    onDiscovery: (V) -> Unit
+) {
+
+    val visited = ArrayList<V>()
+    val open = Stack<V>()
+    open.push(origin)
+    while (open.isNotEmpty()) {
+        val current = open.pop()
+        visited.add(current)
+        val neighbors = edgesFrom(current)
+        for ((_, index) in neighbors) {
+            val neighbor = this[index]
+            if (neighbor in visited) {
+                continue
+            }
+            onDiscovery(neighbor)
+            open += neighbor
+        }
+
+
+    }
+}
+
+/**
+ * Creates a sub graph that contains only the vertices
+ * specified in [containing] and it's respective edges.
+ */
+fun <E, V> Graph<E, V>.subGraph(
+    containing: Collection<V>
+): Graph<E, V> {
+    val sub = Graph<E, V>()
+    // Add all vertices first so that we can be sure
+    for (v in containing) {
+        sub.addVertex(v)
+    }
+    for (v in containing) {
+        val neighbors = edgesFrom(v)
+        val mappedIndex = sub.indexOf(v)
+        for ((edge, destination) in neighbors) {
+            val destV = this[destination]
+            val dMappedIndex = sub.indexOf(destV)
+            sub.connect(mappedIndex, dMappedIndex, edge)
+        }
+    }
+    return sub
+}
+
+/**
+ *
+ */
+fun <E, V> Graph<E, V>.components(): Set<Graph<E, V>> {
+    val pending: ArrayList<V> = ArrayList(this.vertices)
+    val components = HashSet<Graph<E, V>>()
+    while (pending.isNotEmpty()) {
+        val elements = HashSet<V>()
+        val first = pending.random()
+        elements += first
+        explore(first) {
+            elements += it
+        }
+        with(pending) {
+            remove(first)
+            removeAll(elements)
+        }
+        components += this.subGraph(elements)
+    }
+    return components
+}
+
+fun <E, V> graph(builder: Graph<E, V>.() -> Unit): Graph<E, V> {
+    val graph = Graph<E, V>()
+    graph.builder()
+    return graph
 }
