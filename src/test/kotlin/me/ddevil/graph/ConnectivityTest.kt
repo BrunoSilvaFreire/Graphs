@@ -1,14 +1,13 @@
 package me.ddevil.graph
 
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
 val dummyGraph = graph<Unit, IntLabeledVertex> {
     for (i in 0..5) {
-        addVertex(
-            IntLabeledVertex(i)
-        )
+        this += IntLabeledVertex(i)
     }
     connect(0, 1, Unit)
     connect(2, 3, Unit)
@@ -16,6 +15,10 @@ val dummyGraph = graph<Unit, IntLabeledVertex> {
 }
 
 class ConnectivityTest {
+    @BeforeTest
+    fun graphVisualization() {
+        dummyGraph.printToConsole()
+    }
 
     @Test
     fun componentCountTest() {

@@ -31,7 +31,7 @@ class Graph<E, V> {
 
     @JvmOverloads
     fun connect(first: Int, second: Int, edge: E, mode: ConnectionMode = ConnectionMode.BIDIRECTIONAL) {
-        edges[first, second] = edge
+        this[first, second] = edge
         if (mode == ConnectionMode.BIDIRECTIONAL) {
             connect(second, first, edge, mode = ConnectionMode.UNIDIRECTIONAL)
         }
@@ -75,15 +75,6 @@ class Graph<E, V> {
 
     }
 
-    fun printTree() {
-        for ((index, value) in vertices.withIndex()) {
-            println("$index:")
-            for ((first, second) in edgesFrom(value)) {
-                println("  -> $second: $first")
-            }
-        }
-    }
-
     fun vertex(function: (V) -> Boolean): Pair<V, Int>? {
         for ((i, v) in vertices.withIndex()) {
             if (function(v)) {
@@ -99,4 +90,6 @@ class Graph<E, V> {
 
 }
 
-operator fun <R, C, V> Table<R, C, V>.set(first: R, second: C, value: V): V = put(first, second, value)
+
+
+private operator fun <R, C, V> Table<R, C, V>.set(first: R, second: C, value: V): V = put(first, second, value)

@@ -1,32 +1,14 @@
 package me.ddevil.graph
 
-import java.security.SecureRandom
+import me.ddevil.graph.search.BreadthFirstStrategy
+import me.ddevil.graph.search.DepthFirstStrategy
+import me.ddevil.graph.search.SearchStrategy
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-fun main() {
-    val graph = Graph<Unit, Int>()
-    val total = 10
-    for (i in 0 until total) {
-        graph.addVertex(i)
-    }
-    val r = SecureRandom()
-    for (i in 0 until total) {
-        graph.connect(r.nextInt(total), r.nextInt(total), Unit)
-    }
-    graph.printTree()
-    println(graph.depthFirstSearch(0, total - 1))
-    println(graph.breadthFirstSearch(0, total - 1))
-}
 
-fun <E, V, T : Comparable<T>> Graph<E, V>.selectHighestVertexBy(
-    selector: (V) -> T
-): V {
-    return vertices.maxBy(selector)!!
-}
-
-private fun <E> reconstructPath(element: E, map: Map<E, E>): List<E> {
+private fun <E> transversePath(element: E, map: Map<E, E>): List<E> {
     val list = ArrayList<E>()
     list += element
     var current: E? = element
@@ -40,57 +22,40 @@ private fun <E> reconstructPath(element: E, map: Map<E, E>): List<E> {
     return list.reversed()
 }
 
-fun <E, V> Graph<E, V>.depthFirstSearch(
-    from: V,
-    to: V
-) = search(from, to, Stack<V>()) {
-    if (it.empty()) {
-        return@search null
-    }
-    return@search it.pop()
-}
+/**
+ * Performs a [search] using [DepthFirstStrategy]
+ */
+fun <E, V> Graph<E, V>.depthFirstSearch(from: V, to: V) = search(from, to, DepthFirstStrategy)
 
-fun <E, V> Graph<E, V>.breadthFirstSearch(
-    from: V,
-    to: V
-) = search(from, to, PriorityQueue<V>()) {
-    it.poll()
-}
+/**
+ * Performs a [search] using [BreadthFirstStrategy]
+ */
+fun <E, V> Graph<E, V>.breadthFirstSearch(from: V, to: V) = search(from, to, BreadthFirstStrategy)
 
+/**
+ * Find a path where the origin is [from] and the destination is
+ * [to] using the specified [strategy].
+ * @see depthFirstSearch
+ * @see breadthFirstSearch
+ * @see DepthFirstStrategy
+ * @see BreadthFirstStrategy
+ * @return null if there is no possible path
+ */
 fun <E, V, O> Graph<E, V>.search(
     from: V,
     to: V,
-    open: O,
-    next: (O) -> V?
+    strategy: SearchStrategy
 ): List<V>? where O : MutableCollection<V> {
     if (from == to) {
         return listOf(from)
     }
-    var current = from
-    val visited = ArrayList<V>()
-    println("Searching from $from to $to")
-    val cameFrom = HashMap<V, V>()
-    while (current != to) {
-        visited += current
-        val neighboors = edgesFrom(current)
-        for ((edge, index) in neighboors) {
-            val neighboor = this[index]
-            if (neighboor in visited) {
-                continue
-            }
-            cameFrom[neighboor] = current
-            if (neighboor == to) {
-                return reconstructPath(neighboor, cameFrom)
-            }
-            open += neighboor
-        }
-        val candidate = next(open)
-        if (candidate == null) {
-            break
-        } else {
-            current = candidate
-        }
 
+    val cameFrom = HashMap<V, V>()
+    explore(from, strategy = strategy) { current, neighbor ->
+        cameFrom[neighbor] = current
+        if (neighbor == to) {
+            return transversePath(neighbor, cameFrom)
+        }
     }
     return null
 }
@@ -113,58 +78,21 @@ fun <E, V> Graph<E, V>.searchAtRadius(reference: V, radius: Int): List<V> {
     return list
 }
 
-
-fun <E, V> Graph<E, V>.pathWithHighestWeight(
-    a: V,
-    b: V
-): List<V>? where E : Weighted {
-    val open = ArrayList<V>()
-    val visited = ArrayList<V>()
-    val score = HashMap<V, Int>()
-    val cameFrom = HashMap<V, V>()
-    score[a] = 0
-    open += a
-    do {
-        val current = open.maxBy { score[it]!! } ?: break
-        open -= current
-        visited += current
-        val s = score[current]!!
-        for ((edge, index) in this.edgesFrom(current)) {
-            val other = this[index]
-            val candidate = s + edge.weight
-            if (other in visited) {
-                // Cycle
-                continue
-            }
-            if (other in score) {
-                if (score[other]!! >= candidate) {
-                    continue
-                }
-            }
-            score[other] = candidate
-            cameFrom[other] = current
-            if (other == b) {
-                return reconstructPath(other, cameFrom)
-            }
-        }
-    } while (current != null)
-    return null
-}
-
 /**
  * Passes through all the vertices reachable from [origin] once
  * and invokes [onDiscovery] upon them.
  */
-fun <E, V> Graph<E, V>.explore(
+inline fun <E, V> Graph<E, V>.explore(
     origin: V,
-    onDiscovery: (V) -> Unit
+    strategy: SearchStrategy = DepthFirstStrategy,
+    onDiscovery: (current: V, discovered: V) -> Unit
 ) {
 
     val visited = ArrayList<V>()
-    val open = Stack<V>()
+    val open = ArrayDeque<V>()
     open.push(origin)
     while (open.isNotEmpty()) {
-        val current = open.pop()
+        val current = strategy.next(open)
         visited.add(current)
         val neighbors = edgesFrom(current)
         for ((_, index) in neighbors) {
@@ -172,7 +100,7 @@ fun <E, V> Graph<E, V>.explore(
             if (neighbor in visited) {
                 continue
             }
-            onDiscovery(neighbor)
+            onDiscovery(current, neighbor)
             open += neighbor
         }
 
@@ -205,7 +133,7 @@ fun <E, V> Graph<E, V>.subGraph(
 }
 
 /**
- *
+ * Gets all the [components](https://en.wikipedia.org/wiki/Component_(graph_theory)) of this graph
  */
 fun <E, V> Graph<E, V>.components(): Set<Graph<E, V>> {
     val pending: ArrayList<V> = ArrayList(this.vertices)
@@ -214,8 +142,8 @@ fun <E, V> Graph<E, V>.components(): Set<Graph<E, V>> {
         val elements = HashSet<V>()
         val first = pending.random()
         elements += first
-        explore(first) {
-            elements += it
+        explore(first) { _, discovered ->
+            elements += discovered
         }
         with(pending) {
             remove(first)
@@ -226,8 +154,35 @@ fun <E, V> Graph<E, V>.components(): Set<Graph<E, V>> {
     return components
 }
 
+/**
+ * Type-safe builder for graphs.
+ */
 fun <E, V> graph(builder: Graph<E, V>.() -> Unit): Graph<E, V> {
     val graph = Graph<E, V>()
     graph.builder()
     return graph
+}
+
+/**
+ * Syntax sugar for [Graph.addVertex].
+ * Doesn't return the vertex's index.
+ */
+operator fun <E, V> Graph<E, V>.plusAssign(vertex: V) {
+    addVertex(vertex)
+}
+
+fun <E, V> Graph<E, V>.printToConsole() {
+    for ((index, value) in vertices.withIndex()) {
+        print("$index ")
+        val edges = edgesFrom(value)
+        if (edges.isEmpty()) {
+            println("has no edges.")
+        } else {
+            println("has ${edges.size} edges:")
+            for ((first, second) in edges) {
+                println("-> $second: $first")
+            }
+        }
+
+    }
 }
