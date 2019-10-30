@@ -186,3 +186,29 @@ fun <E, V> Graph<E, V>.printToConsole() {
 
     }
 }
+
+fun completeLabeledGraph(
+    vertexCount: Int
+) = completeGraph(vertexCount, {
+    IntLabeledVertex(it)
+}) { _, _ ->
+    Unit
+}
+
+fun <E, V> completeGraph(
+    vertexCount: Int,
+    vertCreator: (Int) -> V,
+    edgeCreator: (x: Int, y: Int) -> E
+): Graph<E, V> {
+    val graph = Graph<E, V>()
+    for (i in 0 until vertexCount) {
+        graph += vertCreator(i)
+    }
+    for (x in 0 until vertexCount) {
+        for (y in x + 1 until vertexCount) {
+            graph.connect(x, y, edgeCreator(x, y))
+        }
+    }
+
+    return graph
+}
