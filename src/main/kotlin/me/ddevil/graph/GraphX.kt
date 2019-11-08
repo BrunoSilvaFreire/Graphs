@@ -25,12 +25,12 @@ private fun <E> transversePath(element: E, map: Map<E, E>): List<E> {
 /**
  * Performs a [search] using [DepthFirstStrategy]
  */
-fun <E, V> Graph<E, V>.depthFirstSearch(from: V, to: V) = search(from, to, DepthFirstStrategy)
+fun <E : Weighted, V> Graph<E, V>.depthFirstSearch(from: V, to: V) = search(from, to, DepthFirstStrategy)
 
 /**
  * Performs a [search] using [BreadthFirstStrategy]
  */
-fun <E, V> Graph<E, V>.breadthFirstSearch(from: V, to: V) = search(from, to, BreadthFirstStrategy)
+fun <E : Weighted, V> Graph<E, V>.breadthFirstSearch(from: V, to: V) = search(from, to, BreadthFirstStrategy)
 
 /**
  * Find a path where the origin is [from] and the destination is
@@ -45,14 +45,24 @@ fun <E, V, O> Graph<E, V>.search(
     from: V,
     to: V,
     strategy: SearchStrategy
-): List<V>? where O : MutableCollection<V> {
+): List<V>? where O : MutableCollection<V>, E : Weighted {
     if (from == to) {
         return listOf(from)
     }
 
+    val score = HashMap<V, Int>().apply {
+        this[from] = 0
+    }
+
     val cameFrom = HashMap<V, V>()
     explore(from, strategy = strategy) { current, neighbor ->
-        cameFrom[neighbor] = current
+        val edge = edge(indexOf(current), indexOf(neighbor))!!
+
+        val record = score[neighbor]
+        if (record == null || edge.weight < record) {
+            cameFrom[neighbor] = current
+            score[neighbor] = edge.weight
+        }
         if (neighbor == to) {
             return transversePath(neighbor, cameFrom)
         }
@@ -211,4 +221,42 @@ fun <E, V> completeGraph(
     }
 
     return graph
+}
+
+
+fun <E : Weighted, V> Graph<E, V>.kruskal(): Graph<E, V> {
+    val subGraph = Graph<E, V>()
+    val edges: ArrayList<E> = ArrayList(edges.values().filterNotNull().filter {
+        val (from, to) = edgeSources(it)
+        if (from == to) {
+            return@filter false
+        }
+
+        return@filter true
+    })
+
+    for (vertex in vertices) {
+        subGraph.addVertex(vertex)
+    }
+
+    val queue = PriorityQueue<E>(compareBy { it.weight })
+    queue.addAll(edges)
+    var next = queue.poll()
+    val visited = ArrayList<Int>()
+    visited += edgeSources(next).second
+    fun allowed(from: Int, to: Int): Boolean {
+        return true
+    }
+
+    while (next != null) {
+        val (from, to) = edgeSources(next)
+        if (!allowed(from, to)) {
+            continue
+        }
+        subGraph.connect(from, to, next, Graph.ConnectionMode.UNIDIRECTIONAL)
+        visited += to
+        next = queue.poll()
+
+    }
+    return subGraph
 }

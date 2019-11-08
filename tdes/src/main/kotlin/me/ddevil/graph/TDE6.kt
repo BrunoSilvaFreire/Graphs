@@ -7,6 +7,7 @@ fun tde6() {
             this += IntLabeledVertex(i)
         }
         connect(0, 1, Unit)
+        connect(0, 5, Unit)
         connect(2, 3, Unit)
         connect(3, 4, Unit)
     }

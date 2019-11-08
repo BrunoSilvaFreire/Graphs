@@ -1,2 +1,2 @@
-include ':compressor', ':project1', ":tdes"
+include ':compressor', ':project1', ":tdes", ":project2:core", ":project2:desktop", ":project2"
 rootProject.name = 'graph'

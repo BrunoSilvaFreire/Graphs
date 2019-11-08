@@ -23,6 +23,7 @@ class Graph<E, V> {
         vertices.add(vertex)
         return i
     }
+
     fun addVertices(vararg vertices: V) {
         for (vertex in vertices) {
             addVertex(vertex)
@@ -86,10 +87,23 @@ class Graph<E, V> {
 
     fun edge(x: Int, y: Int): E? = edges[x, y]
     fun indexOf(vertex: V) = vertices.indexOf(vertex)
+    fun neighborsOf(v: V) = edgesFrom(v).map {
+        it.second to this[it.second]
+    }
 
+    fun edgeSources(edge: E): Pair<Int, Int> {
+        val idx = vertices.indices
+        for (x in idx) {
+            for (y in idx) {
+                if (this[x, y] == edge) {
+                    return x to y
+                }
+            }
+        }
+        throw  IllegalStateException()
+    }
 
 }
-
 
 
 private operator fun <R, C, V> Table<R, C, V>.set(first: R, second: C, value: V): V = put(first, second, value)

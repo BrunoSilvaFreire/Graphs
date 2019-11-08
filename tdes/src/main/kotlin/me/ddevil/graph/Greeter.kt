@@ -8,6 +8,7 @@ data class TDE(
 )
 
 val tdes = listOf(
+    TDE(5, ::tde5),
     TDE(6, ::tde6)
 )
 
