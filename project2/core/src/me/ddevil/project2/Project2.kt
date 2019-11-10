@@ -130,6 +130,18 @@ class Project2 : ApplicationAdapter() {
                 )
             }
         }
+        for (x in 0 until mazeSize) {
+            for (y in 0 until mazeSize) {
+                for ((dx, dy) in listOf(
+                    -1 to 0,
+                    1 to 0,
+                    0 to -1,
+                    0 to 1
+                )) {
+
+                }
+            }
+        }
 
     }
 
