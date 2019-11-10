@@ -145,8 +145,12 @@ fun <E, V> Graph<E, V>.subGraph(
 /**
  * Gets all the [components](https://en.wikipedia.org/wiki/Component_(graph_theory)) of this graph
  */
-fun <E, V> Graph<E, V>.components(): Set<Graph<E, V>> {
-    val pending: ArrayList<V> = ArrayList(this.vertices)
+fun <E, V> Graph<E, V>.components(filter: ((V) -> Boolean)? = null): Set<Graph<E, V>> {
+    val pending = if (filter != null) {
+        vertices.filter(filter).toMutableList()
+    } else {
+        ArrayList(vertices)
+    }
     val components = HashSet<Graph<E, V>>()
     while (pending.isNotEmpty()) {
         val elements = HashSet<V>()
@@ -160,6 +164,8 @@ fun <E, V> Graph<E, V>.components(): Set<Graph<E, V>> {
             removeAll(elements)
         }
         components += this.subGraph(elements)
+        println("${pending.size} vertices remaining")
+
     }
     return components
 }

@@ -13,23 +13,26 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.utils.Align
+import me.ddevil.graph.Labeled
+import me.ddevil.graph.components
 import kotlin.math.floor
 
-
 class Room(
+    override val label: Int,
     val type: RoomType
-) {
+) : Labeled<Int> {
     enum class RoomType {
         OPAQUE,
         EMPTY
     }
+
+    val position: Pair<Int, Int> get() = label % mazeSize to label / mazeSize
 }
 
 class Corridor(
     override val weight: Int //Distance
 ) : Weighted
 
-const val mazeSize = 100
 const val cellSize = 1.0F
 
 val opaqueColor = Color(
@@ -64,13 +67,13 @@ class Project2 : ApplicationAdapter() {
         }
     }
 
-    val graph = Graph<Corridor, Room>()
     var cam = OrthographicCamera()
     lateinit var firstLabel: Label
     lateinit var secondLabel: Label
     lateinit var cellRenderer: ShapeRenderer
     var first = 0
     var last = (mazeSize * mazeSize) - 1
+    lateinit var components: Set<MazeGraph>
     lateinit var ui: Stage
     private fun updateLabels() {
         val x = first % mazeSize
@@ -117,10 +120,12 @@ class Project2 : ApplicationAdapter() {
 
         cellRenderer = ShapeRenderer()
 
+        val graph = MazeGraph()
         for (x in 0 until mazeSize) {
             for (y in 0 until mazeSize) {
                 graph.addVertex(
                     Room(
+                        indexOf(x, y),
                         if (Random.nextBoolean()) {
                             Room.RoomType.OPAQUE
                         } else {
@@ -132,15 +137,34 @@ class Project2 : ApplicationAdapter() {
         }
         for (x in 0 until mazeSize) {
             for (y in 0 until mazeSize) {
+                val cell = graph.vertexAt(x, y)
+                if (cell.type == Room.RoomType.OPAQUE) {
+                    continue
+                }
                 for ((dx, dy) in listOf(
                     -1 to 0,
                     1 to 0,
                     0 to -1,
                     0 to 1
                 )) {
+                    val (nx, ny) = x + dx to y + dy
+                    if (isOutOfBounds(nx, ny)) {
+                        continue
+                    }
+                    val neighbor = graph.vertexAt(nx, ny)
+                    if (neighbor.type == Room.RoomType.EMPTY) {
+                        graph.connect(
+                            indexOf(x, y), indexOf(nx, ny), Corridor(1),
+                            Graph.ConnectionMode.UNIDIRECTIONAL
 
+                        )
+                    }
                 }
             }
+        }
+        println("Creating components")
+        components = graph.components {
+            return@components it.type == Room.RoomType.EMPTY
         }
 
     }
@@ -189,18 +213,18 @@ class Project2 : ApplicationAdapter() {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
         cellRenderer.begin(ShapeRenderer.ShapeType.Filled)
         cellRenderer.projectionMatrix = cam.combined
-        for (x in 0 until mazeSize) {
-            for (y in 0 until mazeSize) {
-                val index = x + y * mazeSize
-                val cell = graph[index]
-
+        for (component in components) {
+            val c = Color(component.hashCode())
+            c.a = 1.0F
+            for (cell in component.vertices) {
+                val (x, y) = cell.position
                 if (cell.type == Room.RoomType.EMPTY) {
                     cellRenderer.rect(
                         x * cellSize,
                         y * cellSize,
                         cellSize,
                         cellSize,
-                        emptyColor, emptyColor, emptyColor, emptyColor
+                        c, c, c, c
                     )
                 }
             }

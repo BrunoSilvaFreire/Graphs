@@ -103,6 +103,24 @@ class Graph<E, V> {
         throw  IllegalStateException()
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Graph<*, *>
+
+        if (edges != other.edges) return false
+        if (vertices != other.vertices) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = edges.hashCode()
+        result = 31 * result + vertices.hashCode()
+        return result
+    }
+
 }
 
 
