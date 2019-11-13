@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="compressor_main" target="1.8" />
+      <module name="compressor_test" target="1.8" />
+      <module name="core_main" target="1.8" />
+      <module name="core_test" target="1.8" />
+      <module name="desktop_main" target="1.8" />
+      <module name="desktop_test" target="1.8" />
+      <module name="graph_main" target="1.8" />
+      <module name="graph_test" target="1.8" />
+      <module name="project1_main" target="1.8" />
+      <module name="project1_test" target="1.8" />
+      <module name="tdes_main" target="1.8" />
+      <module name="tdes_test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
