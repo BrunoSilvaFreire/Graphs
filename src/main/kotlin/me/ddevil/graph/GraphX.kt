@@ -8,7 +8,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-private fun <E> transversePath(element: E, map: Map<E, E>): List<E> {
+fun <E> transversePath(element: E, map: Map<E, E>): List<E> {
     val list = ArrayList<E>()
     list += element
     var current: E? = element
@@ -57,16 +57,18 @@ fun <E, V, O> Graph<E, V>.search(
     val cameFrom = HashMap<V, V>()
     explore(from, strategy = strategy) { current, neighbor ->
         val edge = edge(indexOf(current), indexOf(neighbor))!!
-
+        val currentScore = score[current]!!
+        val candidate = currentScore + edge.weight
         val record = score[neighbor]
-        if (record == null || edge.weight < record) {
+        if (record == null || candidate < record) {
             cameFrom[neighbor] = current
-            score[neighbor] = edge.weight
-        }
-        if (neighbor == to) {
-            return transversePath(neighbor, cameFrom)
+            score[neighbor] = candidate
         }
     }
+    if (to in cameFrom) {
+        return transversePath(to, cameFrom)
+    }
+
     return null
 }
 
@@ -89,8 +91,7 @@ fun <E, V> Graph<E, V>.searchAtRadius(reference: V, radius: Int): List<V> {
 }
 
 /**
- * Passes through all the vertices reachable from [origin] once
- * and invokes [onDiscovery] upon them.
+ * Passes through all the vertices reachable from [origin] and invokes [onDiscovery] upon each edges them.
  */
 inline fun <E, V> Graph<E, V>.explore(
     origin: V,
@@ -99,19 +100,18 @@ inline fun <E, V> Graph<E, V>.explore(
 ) {
 
     val visited = ArrayList<V>()
-    val open = ArrayDeque<V>()
-    open.push(origin)
-    while (open.isNotEmpty()) {
-        val current = strategy.next(open)
-        visited.add(current)
-        val neighbors = edgesFrom(current)
-        for ((_, index) in neighbors) {
+    val pending = ArrayDeque<V>().apply {
+        push(origin)
+    }
+    while (pending.isNotEmpty()) {
+        val current = strategy.next(pending)
+        visited += current
+        for ((_, index) in edgesFrom(current)) {
             val neighbor = this[index]
-            if (neighbor in visited) {
-                continue
-            }
             onDiscovery(current, neighbor)
-            open += neighbor
+            if (neighbor !in visited) {
+                pending += neighbor
+            }
         }
 
 
@@ -157,7 +157,9 @@ fun <E, V> Graph<E, V>.components(filter: ((V) -> Boolean)? = null): Set<Graph<E
         val first = pending.random()
         elements += first
         explore(first) { _, discovered ->
-            elements += discovered
+            if (discovered !in elements) {
+                elements += discovered
+            }
         }
         with(pending) {
             remove(first)
